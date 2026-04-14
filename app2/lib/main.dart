@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
 }
 
 class RowColumnPage extends StatelessWidget {
-  const RowColumnPage({Key? key}) : super(key: key);
+  const RowColumnPage({super.key});
 
   @override
   Widget build(BuildContext context) {
