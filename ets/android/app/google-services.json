@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "543007245388",
+    "project_id": "ets-59b6c",
+    "storage_bucket": "ets-59b6c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:543007245388:android:1280eab067c1ed319c60e9",
+        "android_client_info": {
+          "package_name": "com.example.ets"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtHrk1T8gwhypi_WrU05S-IlqVqA33_KA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
