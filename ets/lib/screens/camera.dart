@@ -15,41 +15,74 @@ class _CameraScreenState
   final ImagePicker picker =
       ImagePicker();
 
-  Future<void> takePhoto() async {
+  bool busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      openCamera();
+    });
+  }
+
+  Future<void> openCamera() async {
+    if (busy) return;
+
+    busy = true;
+
     final XFile? photo =
         await picker.pickImage(
       source: ImageSource.camera,
       imageQuality: 80,
     );
 
-    if (photo == null) return;
+    if (!context.mounted) return;
+
+    if (photo == null) {
+      Navigator.pop(context);
+      return;
+    }
 
     await MediaDatabase.instance
-        .insertImage(photo.path);
-
-    if (!context.mounted) return;
+        .insertImage(
+      photo.path,
+      source: "camera",
+    );
 
     ScaffoldMessenger.of(context)
         .showSnackBar(
       const SnackBar(
-        content: Text(
-            "Saved to Gallery"),
+        content:
+            Text("Saved to Gallery"),
+        duration:
+            Duration(seconds: 1),
       ),
     );
+
+    busy = false;
+
+    await Future.delayed(
+      const Duration(
+        milliseconds: 500,
+      ),
+    );
+
+    if (context.mounted) {
+      openCamera();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar:
-          AppBar(title: const Text("Camera")),
-
+    return const Scaffold(
+      backgroundColor: Colors.black,
       body: Center(
-        child: ElevatedButton.icon(
-          onPressed: takePhoto,
-          icon: const Icon(Icons.camera),
-          label:
-              const Text("Take Photo"),
+        child: Text(
+          "Opening Camera...",
+          style: TextStyle(
+            color: Colors.white70,
+          ),
         ),
       ),
     );

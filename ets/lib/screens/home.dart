@@ -169,7 +169,7 @@ class _HomeScreenState
                       "Camera",
                       const Color(
                           0xFF7A73D1),
-                      'home',
+                      'camera',
                     ),
 
                     appIcon(

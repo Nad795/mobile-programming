@@ -8,8 +8,9 @@ class MediaDatabase {
   static Database? _database;
 
   Future<Database> get database async {
-    if (_database != null)
+    if (_database != null) {
       return _database!;
+    }
 
     _database = await initDB("media.db");
     return _database!;
@@ -25,33 +26,53 @@ class MediaDatabase {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: createDB,
+      onUpgrade: upgradeDB,
     );
   }
 
-  Future createDB(
-      Database db,
-      int version) async {
+  Future<void> createDB(
+    Database db,
+    int version,
+  ) async {
     await db.execute('''
       CREATE TABLE media (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         path TEXT NOT NULL,
+        source TEXT NOT NULL,
+        room TEXT,
         createdAt TEXT
       )
     ''');
   }
 
+  Future<void> upgradeDB(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    await db.execute(
+        "DROP TABLE IF EXISTS media");
+
+    await createDB(db, newVersion);
+  }
+
   Future<int> insertImage(
-      String path) async {
+    String path, {
+    String source = "camera",
+    String room = "",
+  }) async {
     final db = await instance.database;
 
     return await db.insert(
       "media",
       {
         "path": path,
-        "createdAt":
-            DateTime.now().toIso8601String(),
+        "source": source,
+        "room": room,
+        "createdAt": DateTime.now()
+            .toIso8601String(),
       },
     );
   }
@@ -66,7 +87,34 @@ class MediaDatabase {
     );
   }
 
-  Future<int> deleteImage(int id) async {
+  Future<List<Map<String, dynamic>>>
+      getImagesByRoom(
+          String room) async {
+    final db = await instance.database;
+
+    return await db.query(
+      "media",
+      where: "room = ?",
+      whereArgs: [room],
+      orderBy: "id DESC",
+    );
+  }
+
+  Future<List<Map<String, dynamic>>>
+      getImagesBySource(
+          String source) async {
+    final db = await instance.database;
+
+    return await db.query(
+      "media",
+      where: "source = ?",
+      whereArgs: [source],
+      orderBy: "id DESC",
+    );
+  }
+
+  Future<int> deleteImage(
+      int id) async {
     final db = await instance.database;
 
     return await db.delete(
@@ -74,5 +122,10 @@ class MediaDatabase {
       where: "id = ?",
       whereArgs: [id],
     );
+  }
+
+  Future close() async {
+    final db = await instance.database;
+    db.close();
   }
 }

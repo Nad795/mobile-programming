@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ets/database/chat_database.dart';
+import 'package:ets/database/media_database.dart';
 import 'package:ets/services/notification.dart';
 
 class ChatRoomScreen extends StatefulWidget {
@@ -55,7 +56,6 @@ class _ChatRoomScreenState
           "Jaga diri ya.",
           "Aku paham.",
         ];
-
       case "Teman Hangout":
         return [
           "WKWKWK 😆",
@@ -63,7 +63,6 @@ class _ChatRoomScreenState
           "Ngopi yok",
           "Lu lucu juga",
         ];
-
       case "Teman Curhat":
         return [
           "Pelan-pelan ya.",
@@ -71,7 +70,6 @@ class _ChatRoomScreenState
           "Semua akan lewat.",
           "Kamu hebat loh.",
         ];
-
       case "Teman yang Mirip Dia":
         return [
           "...",
@@ -79,7 +77,6 @@ class _ChatRoomScreenState
           "Aneh ya.",
           "Kamu terlihat gelisah.",
         ];
-
       case "Temannya Dia":
         return [
           "Dia tadi lewat.",
@@ -87,7 +84,6 @@ class _ChatRoomScreenState
           "Kemarin ketemu dia.",
           "Oh gitu ya.",
         ];
-
       default:
         return [
           "Deadline jangan lupa ya.",
@@ -108,7 +104,6 @@ class _ChatRoomScreenState
     );
 
     messageController.clear();
-
     await loadMessages();
 
     Future.delayed(
@@ -141,18 +136,26 @@ class _ChatRoomScreenState
     final XFile? photo =
         await picker.pickImage(
       source: ImageSource.camera,
+      imageQuality: 80,
     );
 
-    if (photo != null) {
-      await ChatDatabase.instance
-          .insertMessage(
-        widget.roomName,
-        photo.path,
-        true,
-      );
+    if (photo == null) return;
 
-      await loadMessages();
-    }
+    await ChatDatabase.instance
+        .insertMessage(
+      widget.roomName,
+      photo.path,
+      true,
+    );
+
+    await MediaDatabase.instance
+        .insertImage(
+      photo.path,
+      source: "chat",
+      room: widget.roomName,
+    );
+
+    await loadMessages();
   }
 
   Future<void> deleteMessage(int id) async {
@@ -162,9 +165,11 @@ class _ChatRoomScreenState
     await loadMessages();
   }
 
-  Widget bubble(
-      Map<String, dynamic> msg) {
+  Widget bubble(Map<String, dynamic> msg) {
     final bool isMe = msg["isMe"] == 1;
+
+    final isImage =
+        msg["text"].toString().startsWith("/");
 
     return GestureDetector(
       onLongPress: () =>
@@ -176,38 +181,41 @@ class _ChatRoomScreenState
         child: Container(
           margin:
               const EdgeInsets.symmetric(
-            vertical: 4,
-            horizontal: 8,
+            vertical: 6,
+            horizontal: 10,
           ),
           padding:
               const EdgeInsets.all(12),
+          constraints:
+              const BoxConstraints(
+                  maxWidth: 260),
           decoration: BoxDecoration(
             color: isMe
-                ? Colors.blue
-                : Colors.grey[300],
+                ? const Color(0xFF4D55CC)
+                : const Color(0xFFB5A8D5),
             borderRadius:
                 BorderRadius.circular(
-                    16),
+                    18),
           ),
-          child: msg["text"]
-                  .toString()
-                  .endsWith(".jpg") ||
-              msg["text"]
-                  .toString()
-                  .endsWith(".png")||
-              msg["text"]
-                  .toString()
-                  .endsWith(".jpeg")
-              ? Image.file(
-                  File(msg["text"]),
-                  width: 180,
+          child: isImage
+              ? ClipRRect(
+                  borderRadius:
+                      BorderRadius
+                          .circular(12),
+                  child: Image.file(
+                    File(msg["text"]),
+                    width: 180,
+                    fit: BoxFit.cover,
+                  ),
                 )
               : Text(
                   msg["text"],
                   style: TextStyle(
                     color: isMe
                         ? Colors.white
-                        : Colors.black,
+                        : const Color(
+                            0xFF211C84),
+                    fontSize: 14,
                   ),
                 ),
         ),
@@ -218,14 +226,27 @@ class _ChatRoomScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor:
+          const Color(0xFFF5F3FF),
+
       appBar: AppBar(
-        title:
-            Text(widget.roomName),
+        backgroundColor:
+            const Color(0xFF211C84),
+        title: Text(
+          widget.roomName,
+          style: const TextStyle(
+              color: Colors.white),
+        ),
+        centerTitle: true,
       ),
+
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
+              padding:
+                  const EdgeInsets.only(
+                      top: 10),
               itemCount:
                   messages.length,
               itemBuilder:
@@ -235,11 +256,13 @@ class _ChatRoomScreenState
               },
             ),
           ),
+
           Container(
             padding:
-                const EdgeInsets.all(
-                    8),
-            color: Colors.grey[200],
+                const EdgeInsets.all(10),
+            decoration: const BoxDecoration(
+              color: Color(0xFF7A73D1),
+            ),
             child: Row(
               children: [
                 IconButton(
@@ -247,29 +270,50 @@ class _ChatRoomScreenState
                       openCamera,
                   icon: const Icon(
                     Icons.camera_alt,
+                    color: Colors.white,
                   ),
                 ),
+
                 Expanded(
                   child: TextField(
                     controller:
                         messageController,
                     decoration:
-                        const InputDecoration(
+                        InputDecoration(
                       hintText:
                           "Type message...",
+                      filled: true,
+                      fillColor:
+                          Colors.white,
+                      contentPadding:
+                          const EdgeInsets
+                              .symmetric(
+                        horizontal: 12,
+                      ),
                       border:
-                          OutlineInputBorder(),
+                          OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius
+                                .circular(
+                                    12),
+                        borderSide:
+                            BorderSide
+                                .none,
+                      ),
                     ),
                   ),
                 ),
+
+                const SizedBox(width: 8),
+
                 IconButton(
                   onPressed:
                       sendMessage,
                   icon: const Icon(
                     Icons.send,
+                    color:
+                        Color(0xFF211C84),
                   ),
-                  color:
-                      Colors.blue,
                 ),
               ],
             ),

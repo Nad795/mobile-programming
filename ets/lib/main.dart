@@ -9,6 +9,7 @@ import 'package:ets/screens/register.dart';
 import 'package:ets/screens/notes.dart';
 import 'package:ets/screens/chat.dart';
 import 'package:ets/screens/gallery.dart';
+import 'package:ets/screens/camera.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -166,6 +167,8 @@ class MyApp extends StatelessWidget {
 
         'gallery': (context) =>
             const GalleryScreen(),
+        'camera': (context) =>
+            const CameraScreen(),
       },
     );
   }
