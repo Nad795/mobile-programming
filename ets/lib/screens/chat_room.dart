@@ -165,6 +165,55 @@ class _ChatRoomScreenState
     await loadMessages();
   }
 
+  Future<void> editMessage(
+    int id,
+    String oldText,
+  ) async {
+    final controller =
+        TextEditingController(
+      text: oldText,
+    );
+
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text(
+            "Edit Message",
+          ),
+          content: TextField(
+            controller: controller,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(context),
+              child: const Text(
+                "Cancel",
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                await ChatDatabase
+                    .instance
+                    .updateMessage(
+                  id,
+                  controller.text,
+                );
+
+                Navigator.pop(context);
+                await loadMessages();
+              },
+              child: const Text(
+                "Save",
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget bubble(Map<String, dynamic> msg) {
     final bool isMe = msg["isMe"] == 1;
 
@@ -172,8 +221,47 @@ class _ChatRoomScreenState
         msg["text"].toString().startsWith("/");
 
     return GestureDetector(
-      onLongPress: () =>
-          deleteMessage(msg["id"]),
+      onLongPress: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (_) {
+            return SafeArea(
+              child: Wrap(
+                children: [
+                  ListTile(
+                    leading:
+                        const Icon(Icons.edit),
+                    title:
+                        const Text("Edit"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      editMessage(
+                        msg["id"],
+                        msg["text"],
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading:
+                        const Icon(
+                      Icons.delete,
+                      color: Colors.red,
+                    ),
+                    title:
+                        const Text("Delete"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      deleteMessage(
+                        msg["id"],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
       child: Align(
         alignment: isMe
             ? Alignment.centerRight

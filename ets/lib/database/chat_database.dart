@@ -91,4 +91,20 @@ class ChatDatabase {
       whereArgs: [id],
     );
   }
+
+  Future<int> updateMessage(
+    int id,
+    String newText,
+  ) async {
+    final db = await instance.database;
+
+    return await db.update(
+      "messages",
+      {
+        "text": newText,
+      },
+      where: "id = ?",
+      whereArgs: [id],
+    );
+  }
 }
